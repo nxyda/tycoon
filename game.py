@@ -6,6 +6,7 @@ from bot import Bot
 WHITE = (255, 255, 255)
 CARD_WIDTH = 60
 CARD_HEIGHT = 90
+CARD_SPACING = 10
 
 class Game:
     def __init__(self, screen):
@@ -23,12 +24,12 @@ class Game:
         self.played_cards = []
 
     def draw_cards(self):
-        total_width = len(self.player_cards) * CARD_WIDTH + (len(self.player_cards) - 1) * 20
+        total_width = len(self.player_cards) * CARD_WIDTH + (len(self.player_cards) - 1) * CARD_SPACING
         start_x = (self.screen_width - total_width) // 2
-        y = self.screen_height - CARD_HEIGHT - 20
+        y = self.screen_height - CARD_HEIGHT - CARD_SPACING
 
         for i, card in enumerate(self.player_cards):
-            x = start_x + i * (CARD_WIDTH + 20)
+            x = start_x + i * (CARD_WIDTH + CARD_SPACING)
             self.screen.blit(card.image, (x, y))
             card.rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
 
