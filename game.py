@@ -56,6 +56,7 @@ class Game:
     def handle_click(self, pos):
         for card in self.player_cards:
             if card.rect.collidepoint(pos):
-                self.played_cards.append(card)
-                self.player_cards.remove(card)
+                if not self.played_cards or card.value > self.played_cards[-1].value:
+                    self.played_cards.append(card)
+                    self.player_cards.remove(card)
                 break

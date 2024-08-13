@@ -14,6 +14,8 @@ class Bot:
         self.cards = random.sample(remaning_cards, 13)
         for card in self.cards:
             remaning_cards.remove(card)
+        self.card_back_image = pygame.image.load("cards/back.png")
+        self.card_back_image = pygame.transform.scale(self.card_back_image, (CARD_WIDTH, CARD_HEIGHT))
 
     def draw(self, screen):
         if self.position == "top":
@@ -29,14 +31,14 @@ class Bot:
         y = 20
         for i, card in enumerate(self.cards):
             x = start_x + i * (CARD_WIDTH + CARD_SPACING)
-            screen.blit(card.image, (x, y))
+            screen.blit(self.card_back_image, (x, y))
 
     def draw_left(self, screen):
         total_height = len(self.cards) * CARD_HEIGHT + (len(self.cards) - 1) * CARD_SPACING
         start_y = (total_height - self.screen_height) // 2
         x = 400
         for i, card in enumerate(self.cards):
-            rotated_image = pygame.transform.rotate(card.image, 270)  
+            rotated_image = pygame.transform.rotate(self.card_back_image, 270)  
             y = start_y + i * (CARD_WIDTH + CARD_SPACING)
             screen.blit(rotated_image, (x, y))
 
@@ -45,6 +47,6 @@ class Bot:
         start_y = (total_height - self.screen_height) // 2
         x = self.screen_width - CARD_HEIGHT - 400  
         for i, card in enumerate(self.cards):
-            rotated_image = pygame.transform.rotate(card.image, 90)  
+            rotated_image = pygame.transform.rotate(self.card_back_image, 90)  
             y = start_y + i * (CARD_WIDTH + CARD_SPACING)
             screen.blit(rotated_image, (x, y))

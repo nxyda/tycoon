@@ -7,6 +7,7 @@ pygame.init()
 FPS = 60
 
 WHITE = (255, 255, 255)
+DARK_GREEN = (0, 100, 0)
 
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 pygame.display.set_caption("Tycoon")
@@ -24,7 +25,7 @@ def main():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 game.handle_click(event.pos)
 
-        screen.fill(WHITE)
+        screen.fill(DARK_GREEN)
         game.draw_cards()
         pygame.display.flip()
         clock.tick(FPS)
