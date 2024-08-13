@@ -24,8 +24,6 @@ def main():
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 game.handle_click(event.pos)
-
-
         if game.current_player != 'player':
             game.play_turn()
 
