@@ -22,6 +22,7 @@ class Game:
         self.bot3 = Bot('right', self.screen_width, self.screen_height, remaining_cards)
 
         self.played_cards = []
+        self.current_player = 'player'  # 'player', 'bot1', 'bot2', 'bot3'
 
     def draw_cards(self):
         total_width = len(self.player_cards) * CARD_WIDTH + (len(self.player_cards) - 1) * CARD_SPACING
@@ -54,9 +55,38 @@ class Game:
             self.screen.blit(card.image, (x, y))
 
     def handle_click(self, pos):
-        for card in self.player_cards:
-            if card.rect.collidepoint(pos):
-                if not self.played_cards or card.value > self.played_cards[-1].value:
-                    self.played_cards.append(card)
-                    self.player_cards.remove(card)
-                break
+        if self.current_player == 'player':
+            for card in self.player_cards:
+                if card.rect.collidepoint(pos):
+                    if not self.played_cards or card.value > self.played_cards[-1].value:
+                        self.played_cards.append(card)
+                        self.player_cards.remove(card)
+                        self.current_player = 'bot1'  # Change to the next player
+                    break
+
+    def play_turn(self):
+        if self.current_player == 'bot1':
+            self.play_bot_turn(self.bot1)
+            self.current_player = 'bot2'
+        elif self.current_player == 'bot2':
+            self.play_bot_turn(self.bot2)
+            self.current_player = 'bot3'
+        elif self.current_player == 'bot3':
+            self.play_bot_turn(self.bot3)
+            self.current_player = 'player'
+
+    def play_bot_turn(self, bot):
+        if not self.played_cards:
+            # If no cards have been played yet, the bot plays the lowest card
+            card_to_play = min(bot.cards, key=lambda c: c.value)
+        else:
+            # Filter out cards that cannot be played
+            valid_cards = [card for card in bot.cards if card.value > self.played_cards[-1].value]
+            if valid_cards:
+                card_to_play = min(valid_cards, key=lambda c: c.value)
+            else:
+                # If no valid card, the bot cannot play
+                return
+
+        self.played_cards.append(card_to_play)
+        bot.cards.remove(card_to_play)
