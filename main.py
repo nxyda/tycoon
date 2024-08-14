@@ -16,26 +16,27 @@ pygame.display.set_caption("Tycoon")
 
 clock = pygame.time.Clock()
 
-BUTTON_WIDTH = 150
-BUTTON_HEIGHT = 50
-BUTTON_X = screen.get_width() - BUTTON_WIDTH - 20
-BUTTON_Y = screen.get_height() - BUTTON_HEIGHT - 20
-button_rect = pygame.Rect(BUTTON_X, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
-
-def draw_pass_button(surface):
+def draw_button(surface, rect, color, hover_color, text):
     mouse_pos = pygame.mouse.get_pos()
-    if button_rect.collidepoint(mouse_pos):
-        pygame.draw.rect(surface, BUTTON_HOVER_COLOR, button_rect)
+    if rect.collidepoint(mouse_pos):
+        pygame.draw.rect(surface, hover_color, rect)
     else:
-        pygame.draw.rect(surface, BUTTON_COLOR, button_rect)
+        pygame.draw.rect(surface, color, rect)
 
     font = pygame.font.SysFont(None, 36)
-    text = font.render("Pass", True, WHITE)
-    text_rect = text.get_rect(center=button_rect.center)
-    surface.blit(text, text_rect)
+    text_surface = font.render(text, True, WHITE)
+    text_rect = text_surface.get_rect(center=rect.center)
+    surface.blit(text_surface, text_rect)
 
 def main():
     game = Game(screen)
+
+    screen_width, screen_height = screen.get_size()
+    BUTTON_WIDTH = 150
+    BUTTON_HEIGHT = 50
+
+    pass_button_rect = pygame.Rect(screen_width - BUTTON_WIDTH - 20, screen_height - BUTTON_HEIGHT - 20, BUTTON_WIDTH, BUTTON_HEIGHT)
+    accept_button_rect = pygame.Rect(20, screen_height - BUTTON_HEIGHT - 20, BUTTON_WIDTH, BUTTON_HEIGHT)
 
     running = True
     while running:
@@ -43,17 +44,21 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if button_rect.collidepoint(event.pos):
+                if pass_button_rect.collidepoint(event.pos):
                     game.pass_turn()
+                elif accept_button_rect.collidepoint(event.pos):
+                    game.handle_button_click(event.pos)
                 else:
                     game.handle_click(event.pos)
+
+        if game.animation.card_moving:
+            game.animation.move_card()
 
         if game.current_player != 'player':
             game.play_turn()
 
         screen.fill(DARK_GREEN)
         game.draw_cards()
-        draw_pass_button(screen) 
         pygame.display.flip()
         clock.tick(FPS)
 

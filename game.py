@@ -2,11 +2,15 @@ import pygame
 import random
 from card import Card
 from bot import Bot
+from animation import Animation
 
 WHITE = (255, 255, 255)
 CARD_WIDTH = 60
 CARD_HEIGHT = 90
 CARD_SPACING = 10
+BUTTON_COLOR = (200, 0, 0)
+BUTTON_HOVER_COLOR = (150, 0, 0)
+
 
 class Game:
     def __init__(self, screen):
@@ -32,26 +36,39 @@ class Game:
 
         self.font = pygame.font.SysFont(None, 36)
 
-    def draw_cards(self):
+        self.animation = Animation()
+        self.selected_card = None
 
+        self.pulled_card = None
+        self.pulled_card_original_position = None
+
+        self.accept_button_rect = pygame.Rect(150, self.screen_height - 60, 140, 50)
+        self.pass_button_rect = pygame.Rect(self.screen_width - 150, self.screen_height - 60, 140, 50)
+
+    def draw_cards(self):
         total_width = len(self.player_cards) * CARD_WIDTH + (len(self.player_cards) - 1) * CARD_SPACING
         start_x = (self.screen_width - total_width) // 2
         y = self.screen_height - CARD_HEIGHT - CARD_SPACING
 
         for i, card in enumerate(self.player_cards):
             x = start_x + i * (CARD_WIDTH + CARD_SPACING)
+            y = self.screen_height - CARD_HEIGHT - CARD_SPACING
+
+            if card == self.pulled_card:
+                x, y = card.rect.topleft  # Użyj pozycji wysuniętej karty
+            else:
+                card.rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
             self.screen.blit(card.image, (x, y))
-            card.rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
 
         self.bot1.draw(self.screen)
         self.bot2.draw(self.screen)
         self.bot3.draw(self.screen)
 
         positions = [
-            (0, -CARD_HEIGHT // 2),   
-            (CARD_WIDTH // 2, 0),      
-            (0, CARD_HEIGHT // 2),     
-            (-CARD_WIDTH // 2, 0)      
+            (0, -CARD_HEIGHT // 2),
+            (CARD_WIDTH // 2, 0),
+            (0, CARD_HEIGHT // 2),
+            (-CARD_WIDTH // 2, 0)
         ]
 
         center_x = (self.screen_width - CARD_WIDTH) // 2
@@ -64,6 +81,8 @@ class Game:
             self.screen.blit(card.image, (x, y))
 
         self.draw_pass_info()
+        self.draw_accept_button()
+        self.draw_pass_button()
 
     def draw_pass_info(self):
         passed_count = sum(1 for player in self.passed.values() if player)
@@ -71,15 +90,59 @@ class Game:
         text_surface = self.font.render(pass_text, True, WHITE)
         self.screen.blit(text_surface, (10, self.screen_height - 50))
 
+    def draw_accept_button(self):
+        mouse_pos = pygame.mouse.get_pos()
+        if self.accept_button_rect.collidepoint(mouse_pos):
+            pygame.draw.rect(self.screen, BUTTON_HOVER_COLOR, self.accept_button_rect)
+        else:
+            pygame.draw.rect(self.screen, BUTTON_COLOR, self.accept_button_rect)
+
+        text = self.font.render("Accept", True, WHITE)
+        text_rect = text.get_rect(center=self.accept_button_rect.center)
+        self.screen.blit(text, text_rect)
+
+    def draw_pass_button(self):
+        mouse_pos = pygame.mouse.get_pos()
+        if self.pass_button_rect.collidepoint(mouse_pos):
+            pygame.draw.rect(self.screen, BUTTON_HOVER_COLOR, self.pass_button_rect)
+        else:
+            pygame.draw.rect(self.screen, BUTTON_COLOR, self.pass_button_rect)
+
+        text = self.font.render("Pass", True, WHITE)
+        text_rect = text.get_rect(center=self.pass_button_rect.center)
+        self.screen.blit(text, text_rect)
+
+    def handle_button_click(self, pos):
+        if self.accept_button_rect.collidepoint(pos):
+            if self.pulled_card:
+                self.played_cards.append(self.pulled_card)
+                self.player_cards.remove(self.pulled_card)
+                self.pulled_card = None
+                self.pulled_card_original_position = None
+                self.animation.reset_card()
+                self.passed['player'] = False
+                self.current_player = self.get_next_player()
+        elif self.pass_button_rect.collidepoint(pos):
+            self.pass_turn()
+
     def handle_click(self, pos):
         if self.current_player == 'player':
+            # Obsługuje kliknięcie przycisków
+            self.handle_button_click(pos)
+            
             for card in self.player_cards:
                 if card.rect.collidepoint(pos):
-                    if not self.played_cards or card.value > self.played_cards[-1].value:
-                        self.played_cards.append(card)
-                        self.player_cards.remove(card)
-                        self.passed['player'] = False
-                        self.current_player = self.get_next_player()
+                    # Jeśli karta nie jest wysunięta, wyciągnij ją
+                    if self.pulled_card is None:
+                        if not self.played_cards or card.value > self.played_cards[-1].value:
+                            self.pulled_card = card
+                            self.pulled_card_original_position = card.rect.topleft
+                            self.animation.select_card(card)
+                    # Jeśli karta jest wysunięta, przywróć ją na pierwotne miejsce
+                    elif card == self.pulled_card:
+                        self.pulled_card.rect.topleft = self.pulled_card_original_position
+                        self.pulled_card = None
+                        self.pulled_card_original_position = None
                     break
 
     def pass_turn(self):
@@ -154,3 +217,6 @@ class Game:
         self.played_cards.append(card_to_play)
         bot.cards.remove(card_to_play)
         self.passed[self.current_player] = False
+
+    def update(self):
+        self.animation.move_card()
