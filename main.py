@@ -23,7 +23,6 @@ BUTTON_Y = screen.get_height() - BUTTON_HEIGHT - 20
 button_rect = pygame.Rect(BUTTON_X, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
 
 def draw_pass_button(surface):
-    """ Draw the pass button on the screen """
     mouse_pos = pygame.mouse.get_pos()
     if button_rect.collidepoint(mouse_pos):
         pygame.draw.rect(surface, BUTTON_HOVER_COLOR, button_rect)

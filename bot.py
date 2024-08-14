@@ -7,13 +7,13 @@ CARD_HEIGHT = 90
 CARD_SPACING = 10
 
 class Bot:
-    def __init__(self, position, screen_width, screen_height, remaning_cards):
+    def __init__(self, position, screen_width, screen_height, remaining_cards):
         self.position = position
         self.screen_width = screen_width
         self.screen_height = screen_height
-        self.cards = random.sample(remaning_cards, 13)
+        self.cards = random.sample(remaining_cards, 13)
         for card in self.cards:
-            remaning_cards.remove(card)
+            remaining_cards.remove(card)
         self.card_back_image = pygame.image.load("cards/back.png")
         self.card_back_image = pygame.transform.scale(self.card_back_image, (CARD_WIDTH, CARD_HEIGHT))
 
@@ -34,19 +34,19 @@ class Bot:
             screen.blit(self.card_back_image, (x, y))
 
     def draw_left(self, screen):
-        total_height = len(self.cards) * CARD_HEIGHT + (len(self.cards) - 1) * CARD_SPACING
-        start_y = (total_height - self.screen_height) // 2
+        total_height = len(self.cards) * CARD_WIDTH + (len(self.cards) - 1) * CARD_SPACING
+        start_y = (self.screen_height // 2) - (total_height // 2)
         x = 400
         for i, card in enumerate(self.cards):
-            rotated_image = pygame.transform.rotate(self.card_back_image, 270)  
+            rotated_image = pygame.transform.rotate(self.card_back_image, 90)
             y = start_y + i * (CARD_WIDTH + CARD_SPACING)
             screen.blit(rotated_image, (x, y))
 
     def draw_right(self, screen):
-        total_height = len(self.cards) * CARD_HEIGHT + (len(self.cards) - 1) * CARD_SPACING
-        start_y = (total_height - self.screen_height) // 2
-        x = self.screen_width - CARD_HEIGHT - 400  
+        total_height = len(self.cards) * CARD_WIDTH + (len(self.cards) - 1) * CARD_SPACING
+        start_y = (self.screen_height // 2) - (total_height // 2)
+        x = self.screen_width - CARD_HEIGHT - 400
         for i, card in enumerate(self.cards):
-            rotated_image = pygame.transform.rotate(self.card_back_image, 90)  
+            rotated_image = pygame.transform.rotate(self.card_back_image, 270)
             y = start_y + i * (CARD_WIDTH + CARD_SPACING)
             screen.blit(rotated_image, (x, y))
