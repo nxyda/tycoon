@@ -51,6 +51,7 @@ def main():
                 else:
                     game.handle_click(event.pos)
 
+
         if game.animation.card_moving:
             game.animation.move_card()
 

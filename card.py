@@ -21,10 +21,12 @@ class Card:
             return 13
         elif value.startswith("A"):
             return 14  
+        elif value.startswith("2"):
+            return 15
         elif value.startswith("10"):  
             return 10
         else: 
-            for num in range (1, 10):
+            for num in range (3, 10):
                 if value.startswith(str(num)):
                     return num
         return 0

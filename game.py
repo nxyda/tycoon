@@ -27,6 +27,8 @@ class Game:
 
         self.played_cards = []
         self.current_player = 'player'
+        self.last_player = None
+
         self.passed = {
             'player': False,
             'bot1': False,
@@ -55,7 +57,7 @@ class Game:
             y = self.screen_height - CARD_HEIGHT - CARD_SPACING
 
             if card == self.pulled_card:
-                x, y = card.rect.topleft  # Użyj pozycji wysuniętej karty
+                x, y = card.rect.topleft  
             else:
                 card.rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
             self.screen.blit(card.image, (x, y))
@@ -121,24 +123,22 @@ class Game:
                 self.pulled_card_original_position = None
                 self.animation.reset_card()
                 self.passed['player'] = False
+                self.last_player = 'player'
                 self.current_player = self.get_next_player()
         elif self.pass_button_rect.collidepoint(pos):
             self.pass_turn()
 
     def handle_click(self, pos):
         if self.current_player == 'player':
-            # Obsługuje kliknięcie przycisków
             self.handle_button_click(pos)
             
             for card in self.player_cards:
                 if card.rect.collidepoint(pos):
-                    # Jeśli karta nie jest wysunięta, wyciągnij ją
                     if self.pulled_card is None:
                         if not self.played_cards or card.value > self.played_cards[-1].value:
                             self.pulled_card = card
                             self.pulled_card_original_position = card.rect.topleft
                             self.animation.select_card(card)
-                    # Jeśli karta jest wysunięta, przywróć ją na pierwotne miejsce
                     elif card == self.pulled_card:
                         self.pulled_card.rect.topleft = self.pulled_card_original_position
                         self.pulled_card = None
@@ -150,11 +150,14 @@ class Game:
         self.current_player = self.get_next_player()
         if self.all_bots_passed() and self.passed['player']:
             self.reset_round()
+            self.current_player = self.last_player  
         else:
             if self.current_player != 'player':
                 self.play_turn()
 
     def get_next_player(self):
+        if self.all_bots_passed() and self.passed['player']:
+            return self.last_player
         if self.current_player == 'player':
             return 'bot1'
         elif self.current_player == 'bot1':
@@ -193,6 +196,7 @@ class Game:
 
             if self.all_bots_passed() and self.passed['player']:
                 self.reset_round()
+                self.current_player = self.last_player
                 break
 
             if self.current_player == 'player':
@@ -209,6 +213,7 @@ class Game:
             if valid_cards:
                 card_to_play = min(valid_cards, key=lambda c: c.value)
                 print(f"Bot {self.current_player} plays card: {card_to_play.value}")
+                self.last_player = self.current_player  
             else:
                 print(f"Bot {self.current_player} passes")
                 self.passed[self.current_player] = True
