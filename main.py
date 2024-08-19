@@ -71,6 +71,11 @@ def main():
             text_surface = font.render("TWO CARDS", True, WHITE)
             text_rect = text_surface.get_rect(center=(screen_width // 2, (screen_height) // 2 - 120))
             screen.blit(text_surface, text_rect)
+        elif game.three_cards == True:
+            font = pygame.font.SysFont(None, 48)
+            text_surface = font.render("THREE CARDS", True, WHITE)
+            text_rect = text_surface.get_rect(center=(screen_width // 2, (screen_height) // 2 - 120))
+            screen.blit(text_surface, text_rect)
         
         pygame.display.flip()
         clock.tick(FPS)
