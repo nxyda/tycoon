@@ -184,13 +184,22 @@ class Game:
                     self.one_cards = True
                     self.two_cards = False
                     self.three_cards = False
-                    self.played_cards.append(self.selected_cards[0])
-                    self.player_cards.remove(self.selected_cards[0])
+                    played_card = self.selected_cards[0]
+                    self.played_cards.append(played_card)
+                    self.player_cards.remove(played_card)
                     self.selected_cards = []
-                    self.passed['player'] = False
-                    self.last_player = 'player'
-                    self.check_if_player_finished('player')
-                    self.current_player = self.get_next_player()
+
+                    if played_card.value == 8:  
+                        self.played_cards = []
+                        self.passed = {key: False for key in self.passed}
+                        self.current_player = 'player'
+                        print("Zagrano kartę 8, kolejka zresetowana. Gracz zaczyna od nowa.")
+                    else:
+                        self.passed['player'] = False
+                        self.last_player = 'player'
+                        self.check_if_player_finished('player')
+                        self.current_player = self.get_next_player()
+
                 elif len(self.selected_cards) == 2 and self.selected_cards[0].value == self.selected_cards[1].value:
                     self.one_cards = False
                     self.two_cards = True
@@ -225,11 +234,16 @@ class Game:
                             for card in self.selected_cards:
                                 self.player_cards.remove(card)
                             self.selected_cards = []
-                            self.passed['player'] = False
-                            self.last_player = 'player'
-                            self.check_if_player_finished('player')
-                            self.current_player = self.get_next_player()
-                            print("Aktualizacja kart na stole:", self.played_cards)
+                            if self.played_cards[-1].value == 8:  
+                                self.played_cards = []
+                                self.passed = {key: False for key in self.passed}
+                                self.current_player = 'player'
+                                print("Zagrano kartę 8, kolejka zresetowana. Gracz zaczyna od nowa.")
+                            else:
+                                self.passed['player'] = False
+                                self.last_player = 'player'
+                                self.check_if_player_finished('player')
+                                self.current_player = self.get_next_player()
                         else:
                             print("Możesz zagrać trzy karty tylko o wyższej wartości niż karty na stole!")
                     else:
@@ -241,11 +255,16 @@ class Game:
                             for card in self.selected_cards:
                                 self.player_cards.remove(card)
                             self.selected_cards = []
-                            self.passed['player'] = False
-                            self.last_player = 'player'
-                            self.check_if_player_finished('player')
-                            self.current_player = self.get_next_player()
-                            print("Aktualizacja kart na stole:", self.played_cards)
+                            if self.played_cards[-1].value == 8:  
+                                self.played_cards = []
+                                self.passed = {key: False for key in self.passed}
+                                self.current_player = 'player'
+                                print("Zagrano kartę 8, kolejka zresetowana. Gracz zaczyna od nowa.")
+                            else:
+                                self.passed['player'] = False
+                                self.last_player = 'player'
+                                self.check_if_player_finished('player')
+                                self.current_player = self.get_next_player()
                         else:
                             print("Możesz zagrać dwie karty tylko o wyższej wartości niż karty na stole!")
                     else:
@@ -253,18 +272,24 @@ class Game:
                 else:
                     if len(self.selected_cards) == 1:
                         if self.selected_cards[0].value > self.played_cards[-1].value:
-                            self.played_cards.append(self.selected_cards[0])
-                            self.player_cards.remove(self.selected_cards[0])
+                            played_card = self.selected_cards[0]
+                            self.played_cards.append(played_card)
+                            self.player_cards.remove(played_card)
                             self.selected_cards = []
-                            self.passed['player'] = False
-                            self.last_player = 'player'
-                            self.check_if_player_finished('player')
-                            self.current_player = self.get_next_player()
+                            if played_card.value == 8:  
+                                self.played_cards = []
+                                self.passed = {key: False for key in self.passed}
+                                self.current_player = 'player'
+                                print("Zagrano kartę 8, kolejka zresetowana. Gracz zaczyna od nowa.")
+                            else:
+                                self.passed['player'] = False
+                                self.last_player = 'player'
+                                self.check_if_player_finished('player')
+                                self.current_player = self.get_next_player()
                         else:
                             print("Możesz zagrać kartę tylko o wyższej wartości niż karty na stole!")
                     else:
                         print("Niepoprawny ruch! Musisz wybrać jedną kartę do zagrania.")
-
         elif self.pass_button_rect.collidepoint(pos):
             self.pass_turn()
 
@@ -334,32 +359,29 @@ class Game:
             if self.current_player == 'player':
                 break
 
+            current_bot = None
             if self.current_player == 'bot1':
-                if self.three_cards:
-                    self.three_cards_game.play_turn(self.bot1)
-                elif self.two_cards:
-                    self.two_cards_game.play_turn(self.bot1)
-                else:
-                    self.one_card_game.play_turn(self.bot1)
-                self.check_if_player_finished('bot1')
-                
+                current_bot = self.bot1
             elif self.current_player == 'bot2':
-                if self.three_cards:
-                    self.three_cards_game.play_turn(self.bot2)
-                elif self.two_cards:
-                    self.two_cards_game.play_turn(self.bot2)
-                else:
-                    self.one_card_game.play_turn(self.bot2)
-                self.check_if_player_finished('bot2')
-                
+                current_bot = self.bot2
             elif self.current_player == 'bot3':
+                current_bot = self.bot3
+
+            if current_bot:
                 if self.three_cards:
-                    self.three_cards_game.play_turn(self.bot3)
+                    self.three_cards_game.play_turn(current_bot)
                 elif self.two_cards:
-                    self.two_cards_game.play_turn(self.bot3)
+                    self.two_cards_game.play_turn(current_bot)
                 else:
-                    self.one_card_game.play_turn(self.bot3)
-                self.check_if_player_finished('bot3')
+                    self.one_card_game.play_turn(current_bot)
+
+                if self.played_cards and self.played_cards[-1].value == 8:
+                    self.played_cards = []
+                    self.passed = {key: False for key in self.passed}
+                    self.current_player = self.get_next_player()
+                    continue
+
+                self.check_if_player_finished(self.current_player)
 
             self.current_player = self.get_next_player()
 

@@ -16,6 +16,7 @@ class Bot:
             remaining_cards.remove(card)
         self.card_back_image = pygame.image.load("cards/back.png")
         self.card_back_image = pygame.transform.scale(self.card_back_image, (CARD_WIDTH, CARD_HEIGHT))
+        
 
     def draw(self, screen):
         if self.position == "top":
