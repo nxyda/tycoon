@@ -58,6 +58,8 @@ class Game:
         self.two_cards_game = TwoCardsGame(self)
         self.three_cards_game = ThreeCardsGame(self)
 
+        self.finished_order = []  
+
     def draw_cards(self):
         self.player_cards.sort(key=lambda card: card.value, reverse=True)
 
@@ -122,10 +124,12 @@ class Game:
                 y = center_y + offset_y
                 card.rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
                 self.screen.blit(card.image, card.rect.topleft)
-            
+        
         self.draw_pass_info()
         self.draw_accept_button()
         self.draw_pass_button()
+
+        self.draw_positions()  
 
     def draw_pass_info(self):
         passed_count = sum(1 for player in self.passed.values() if player)
@@ -155,6 +159,24 @@ class Game:
         text_rect = text.get_rect(center=self.pass_button_rect.center)
         self.screen.blit(text, text_rect)
 
+    def draw_positions(self):
+        if 'player' in self.finished_order:
+            self.draw_position_text(self.finished_order.index('player') + 1, self.screen_width // 2, self.screen_height - CARD_HEIGHT - 80)
+
+        if 'bot1' in self.finished_order:
+            self.draw_position_text(self.finished_order.index('bot1') + 1, self.screen_width // 2, 10)
+
+        if 'bot2' in self.finished_order:
+            self.draw_position_text(self.finished_order.index('bot2') + 1, 10, self.screen_height // 2)
+
+        if 'bot3' in self.finished_order:
+            self.draw_position_text(self.finished_order.index('bot3') + 1, self.screen_width - 60, self.screen_height // 2)
+
+    def draw_position_text(self, position, x, y):
+        position_texts = ["1st", "2nd", "3rd", "4th"]
+        text_surface = self.font.render(position_texts[position - 1], True, WHITE)
+        self.screen.blit(text_surface, (x, y))
+
     def handle_button_click(self, pos):
         if self.accept_button_rect.collidepoint(pos):
             if not self.played_cards:
@@ -167,6 +189,7 @@ class Game:
                     self.selected_cards = []
                     self.passed['player'] = False
                     self.last_player = 'player'
+                    self.check_if_player_finished('player')
                     self.current_player = self.get_next_player()
                 elif len(self.selected_cards) == 2 and self.selected_cards[0].value == self.selected_cards[1].value:
                     self.one_cards = False
@@ -178,6 +201,7 @@ class Game:
                     self.selected_cards = []
                     self.passed['player'] = False
                     self.last_player = 'player'
+                    self.check_if_player_finished('player')
                     self.current_player = self.get_next_player()
                 elif len(self.selected_cards) == 3 and len(set(card.value for card in self.selected_cards)) == 1:
                     self.one_cards = False
@@ -189,6 +213,7 @@ class Game:
                     self.selected_cards = []
                     self.passed['player'] = False
                     self.last_player = 'player'
+                    self.check_if_player_finished('player')
                     self.current_player = self.get_next_player()
                 else:
                     print("To jest niepoprawny ruch. Musisz wybrać jedną kartę na start, dwie karty tej samej wartości, lub trzy karty tej samej wartości!")
@@ -202,6 +227,7 @@ class Game:
                             self.selected_cards = []
                             self.passed['player'] = False
                             self.last_player = 'player'
+                            self.check_if_player_finished('player')
                             self.current_player = self.get_next_player()
                             print("Aktualizacja kart na stole:", self.played_cards)
                         else:
@@ -217,6 +243,7 @@ class Game:
                             self.selected_cards = []
                             self.passed['player'] = False
                             self.last_player = 'player'
+                            self.check_if_player_finished('player')
                             self.current_player = self.get_next_player()
                             print("Aktualizacja kart na stole:", self.played_cards)
                         else:
@@ -231,6 +258,7 @@ class Game:
                             self.selected_cards = []
                             self.passed['player'] = False
                             self.last_player = 'player'
+                            self.check_if_player_finished('player')
                             self.current_player = self.get_next_player()
                         else:
                             print("Możesz zagrać kartę tylko o wyższej wartości niż karty na stole!")
@@ -287,6 +315,20 @@ class Game:
             'bot3': False
         }
 
+    def check_if_player_finished(self, player):
+        if player == 'bot1' and not self.bot1.cards:
+            if player not in self.finished_order:
+                self.finished_order.append(player)
+        elif player == 'bot2' and not self.bot2.cards:
+            if player not in self.finished_order:
+                self.finished_order.append(player)
+        elif player == 'bot3' and not self.bot3.cards:
+            if player not in self.finished_order:
+                self.finished_order.append(player)
+        elif player == 'player' and not self.player_cards:
+            if player not in self.finished_order:
+                self.finished_order.append(player)
+
     def play_turn(self):
         while True:
             if self.current_player == 'player':
@@ -299,6 +341,8 @@ class Game:
                     self.two_cards_game.play_turn(self.bot1)
                 else:
                     self.one_card_game.play_turn(self.bot1)
+                self.check_if_player_finished('bot1')
+                
             elif self.current_player == 'bot2':
                 if self.three_cards:
                     self.three_cards_game.play_turn(self.bot2)
@@ -306,6 +350,8 @@ class Game:
                     self.two_cards_game.play_turn(self.bot2)
                 else:
                     self.one_card_game.play_turn(self.bot2)
+                self.check_if_player_finished('bot2')
+                
             elif self.current_player == 'bot3':
                 if self.three_cards:
                     self.three_cards_game.play_turn(self.bot3)
@@ -313,6 +359,7 @@ class Game:
                     self.two_cards_game.play_turn(self.bot3)
                 else:
                     self.one_card_game.play_turn(self.bot3)
+                self.check_if_player_finished('bot3')
 
             self.current_player = self.get_next_player()
 
@@ -323,6 +370,7 @@ class Game:
 
             if self.current_player == 'player':
                 break
+
 
     def update(self):
         self.animation.move_card()
