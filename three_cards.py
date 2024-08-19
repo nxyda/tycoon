@@ -5,6 +5,13 @@ class ThreeCardsGame:
     def play_turn(self, bot):
         print(f"Bot {self.game.current_player} is playing...")
 
+        if not bot.cards:
+            print(f"Bot {self.game.current_player} has no more cards and passes.")
+            self.game.passed[self.game.current_player] = True
+            return
+        else:
+            self.game.check_if_player_finished(self.game.current_player)
+
         if not self.game.played_cards:
             triplet_to_play = self.find_triplet(bot)
             if triplet_to_play:
