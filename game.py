@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 from card import Card
 from bot import Bot
 from animation import Animation
@@ -42,6 +43,9 @@ class Game:
         self.animation = Animation()
         self.selected_cards = []  
 
+        self.pulled_card = None  
+        self.pulled_card_original_position = None
+
         self.accept_button_rect = pygame.Rect(150, self.screen_height - 60, 140, 50)
         self.pass_button_rect = pygame.Rect(self.screen_width - 150, self.screen_height - 60, 140, 50)
 
@@ -52,6 +56,8 @@ class Game:
         self.two_cards_game = TwoCardsGame(self)
 
     def draw_cards(self):
+        self.player_cards.sort(key=lambda card: card.value, reverse=True)
+
         total_width = len(self.player_cards) * CARD_WIDTH + (len(self.player_cards) - 1) * CARD_SPACING
         start_x = (self.screen_width - total_width) // 2
         y = self.screen_height - CARD_HEIGHT - CARD_SPACING
@@ -78,14 +84,30 @@ class Game:
             (-CARD_WIDTH // 2, 0)
         ]
 
-        center_x = (self.screen_width - CARD_WIDTH) // 2
-        center_y = (self.screen_height - CARD_HEIGHT) // 2
-        for i, card in enumerate(self.played_cards):
-            pos_index = i % 4
-            offset_x, offset_y = positions[pos_index]
-            x = center_x + offset_x
-            y = center_y + offset_y
-            self.screen.blit(card.image, (x, y))
+        if self.one_cards:
+            center_x = (self.screen_width - CARD_WIDTH) // 2
+            center_y = (self.screen_height - CARD_HEIGHT) // 2
+            
+
+            for i, card in enumerate(self.played_cards):
+                pos_index = i % 4
+                offset_x, offset_y = positions[pos_index]
+                x = center_x + offset_x
+                y = center_y + offset_y
+                self.screen.blit(card.image, (x, y))
+
+        elif self.two_cards:
+            center_x = (self.screen_width - CARD_WIDTH) // 2
+            center_y = (self.screen_height - CARD_HEIGHT) // 2
+
+            for i, card in enumerate(self.played_cards):
+                pos_index = i % 4
+                offset_x, offset_y = positions[pos_index]
+                x = center_x + offset_x
+                y = center_y + offset_y 
+                card.rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
+                self.screen.blit(card.image, card.rect.topleft)
+            
 
         self.draw_pass_info()
         self.draw_accept_button()
@@ -132,6 +154,7 @@ class Game:
                     self.last_player = 'player'
                     self.current_player = self.get_next_player()
                 elif len(self.selected_cards) == 2 and self.selected_cards[0].value == self.selected_cards[1].value:
+                    self.one_cards = False
                     self.two_cards = True
                     self.played_cards.extend(self.selected_cards)
                     for card in self.selected_cards:
@@ -153,6 +176,7 @@ class Game:
                             self.passed['player'] = False
                             self.last_player = 'player'
                             self.current_player = self.get_next_player()
+                            print("Aktualizacja kart na stole:", self.played_cards)
                         else:
                             print("Możesz zagrać dwie karty tylko o wyższej wartości niż karty na stole!")
                     else:
