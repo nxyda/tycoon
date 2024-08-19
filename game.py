@@ -3,6 +3,8 @@ import random
 from card import Card
 from bot import Bot
 from animation import Animation
+from one_card import OneCardGame
+from two_cards import TwoCardsGame
 
 WHITE = (255, 255, 255)
 CARD_WIDTH = 60
@@ -10,7 +12,6 @@ CARD_HEIGHT = 90
 CARD_SPACING = 10
 BUTTON_COLOR = (200, 0, 0)
 BUTTON_HOVER_COLOR = (150, 0, 0)
-
 
 class Game:
     def __init__(self, screen):
@@ -39,13 +40,16 @@ class Game:
         self.font = pygame.font.SysFont(None, 36)
 
         self.animation = Animation()
-        self.selected_card = None
-
-        self.pulled_card = None
-        self.pulled_card_original_position = None
+        self.selected_cards = []  
 
         self.accept_button_rect = pygame.Rect(150, self.screen_height - 60, 140, 50)
         self.pass_button_rect = pygame.Rect(self.screen_width - 150, self.screen_height - 60, 140, 50)
+
+        self.one_cards = False
+        self.two_cards = False
+
+        self.one_card_game = OneCardGame(self)
+        self.two_cards_game = TwoCardsGame(self)
 
     def draw_cards(self):
         total_width = len(self.player_cards) * CARD_WIDTH + (len(self.player_cards) - 1) * CARD_SPACING
@@ -56,11 +60,12 @@ class Game:
             x = start_x + i * (CARD_WIDTH + CARD_SPACING)
             y = self.screen_height - CARD_HEIGHT - CARD_SPACING
 
-            if card == self.pulled_card:
-                x, y = card.rect.topleft  
-            else:
-                card.rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
+            card.rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
             self.screen.blit(card.image, (x, y))
+
+            if card in self.selected_cards:  
+                y -= 20
+                self.screen.blit(card.image, (x, y))
 
         self.bot1.draw(self.screen)
         self.bot2.draw(self.screen)
@@ -116,15 +121,56 @@ class Game:
 
     def handle_button_click(self, pos):
         if self.accept_button_rect.collidepoint(pos):
-            if self.pulled_card:
-                self.played_cards.append(self.pulled_card)
-                self.player_cards.remove(self.pulled_card)
-                self.pulled_card = None
-                self.pulled_card_original_position = None
-                self.animation.reset_card()
-                self.passed['player'] = False
-                self.last_player = 'player'
-                self.current_player = self.get_next_player()
+            if not self.played_cards:
+                if len(self.selected_cards) == 1:
+                    self.one_cards = True
+                    self.two_cards = False
+                    self.played_cards.append(self.selected_cards[0])
+                    self.player_cards.remove(self.selected_cards[0])
+                    self.selected_cards = []
+                    self.passed['player'] = False
+                    self.last_player = 'player'
+                    self.current_player = self.get_next_player()
+                elif len(self.selected_cards) == 2 and self.selected_cards[0].value == self.selected_cards[1].value:
+                    self.two_cards = True
+                    self.played_cards.extend(self.selected_cards)
+                    for card in self.selected_cards:
+                        self.player_cards.remove(card)
+                    self.selected_cards = []
+                    self.passed['player'] = False
+                    self.last_player = 'player'
+                    self.current_player = self.get_next_player()
+                else:
+                    print("To jest niepoprawny ruch. Musisz wybrać jedną kartę na start lub dwie karty tej samej wartości!")
+            else:
+                if self.two_cards:
+                    if len(self.selected_cards) == 2 and self.selected_cards[0].value == self.selected_cards[1].value:
+                        if self.selected_cards[0].value > self.played_cards[-1].value:
+                            self.played_cards.extend(self.selected_cards)
+                            for card in self.selected_cards:
+                                self.player_cards.remove(card)
+                            self.selected_cards = []
+                            self.passed['player'] = False
+                            self.last_player = 'player'
+                            self.current_player = self.get_next_player()
+                        else:
+                            print("Możesz zagrać dwie karty tylko o wyższej wartości niż karty na stole!")
+                    else:
+                        print("Musisz zagrać dwie karty tej samej wartości!")
+                else:
+                    if len(self.selected_cards) == 1:
+                        if self.selected_cards[0].value > self.played_cards[-1].value:
+                            self.played_cards.append(self.selected_cards[0])
+                            self.player_cards.remove(self.selected_cards[0])
+                            self.selected_cards = []
+                            self.passed['player'] = False
+                            self.last_player = 'player'
+                            self.current_player = self.get_next_player()
+                        else:
+                            print("Możesz zagrać kartę tylko o wyższej wartości niż karty na stole!")
+                    else:
+                        print("Niepoprawny ruch! Musisz wybrać jedną kartę do zagrania.")
+
         elif self.pass_button_rect.collidepoint(pos):
             self.pass_turn()
 
@@ -134,15 +180,10 @@ class Game:
             
             for card in self.player_cards:
                 if card.rect.collidepoint(pos):
-                    if self.pulled_card is None:
-                        if not self.played_cards or card.value > self.played_cards[-1].value:
-                            self.pulled_card = card
-                            self.pulled_card_original_position = card.rect.topleft
-                            self.animation.select_card(card)
-                    elif card == self.pulled_card:
-                        self.pulled_card.rect.topleft = self.pulled_card_original_position
-                        self.pulled_card = None
-                        self.pulled_card_original_position = None
+                    if card in self.selected_cards:
+                        self.selected_cards.remove(card)
+                    elif len(self.selected_cards) < 2:
+                        self.selected_cards.append(card)
                     break
 
     def pass_turn(self):
@@ -186,11 +227,20 @@ class Game:
                 break
 
             if self.current_player == 'bot1':
-                self.play_bot_turn(self.bot1)
+                if self.two_cards:
+                    self.two_cards_game.play_turn(self.bot1)
+                else:
+                    self.one_card_game.play_turn(self.bot1)
             elif self.current_player == 'bot2':
-                self.play_bot_turn(self.bot2)
+                if self.two_cards:
+                    self.two_cards_game.play_turn(self.bot2)
+                else:
+                    self.one_card_game.play_turn(self.bot2)
             elif self.current_player == 'bot3':
-                self.play_bot_turn(self.bot3)
+                if self.two_cards:
+                    self.two_cards_game.play_turn(self.bot3)
+                else:
+                    self.one_card_game.play_turn(self.bot3)
 
             self.current_player = self.get_next_player()
 
@@ -201,27 +251,6 @@ class Game:
 
             if self.current_player == 'player':
                 break
-
-    def play_bot_turn(self, bot):
-        print(f"Bot {self.current_player} is playing...")
-
-        if not self.played_cards:
-            card_to_play = min(bot.cards, key=lambda c: c.value)
-            print(f"Bot {self.current_player} plays card: {card_to_play.value}")
-        else:
-            valid_cards = [card for card in bot.cards if card.value > self.played_cards[-1].value]
-            if valid_cards:
-                card_to_play = min(valid_cards, key=lambda c: c.value)
-                print(f"Bot {self.current_player} plays card: {card_to_play.value}")
-                self.last_player = self.current_player  
-            else:
-                print(f"Bot {self.current_player} passes")
-                self.passed[self.current_player] = True
-                return
-
-        self.played_cards.append(card_to_play)
-        bot.cards.remove(card_to_play)
-        self.passed[self.current_player] = False
 
     def update(self):
         self.animation.move_card()
