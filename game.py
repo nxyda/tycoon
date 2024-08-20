@@ -27,6 +27,7 @@ class Game:
         self.bot1 = Bot('top', self.screen_width, self.screen_height, remaining_cards)
         self.bot2 = Bot('left', self.screen_width, self.screen_height, remaining_cards)
         self.bot3 = Bot('right', self.screen_width, self.screen_height, remaining_cards)
+        
 
         self.played_cards = []
         self.current_player = 'player'
@@ -59,6 +60,9 @@ class Game:
         self.three_cards_game = ThreeCardsGame(self)
 
         self.finished_order = []  
+
+        self.joker_played = False
+
 
     def draw_cards(self):
         self.player_cards.sort(key=lambda card: card.value, reverse=True)
@@ -185,6 +189,11 @@ class Game:
                     self.two_cards = False
                     self.three_cards = False
                     played_card = self.selected_cards[0]
+                    print("nie wchodzi")
+                    if self.joker_played and played_card.suit == 's' and played_card.value == 3:
+                        print("XD")
+                        played_card.value = 101 
+
                     self.played_cards.append(played_card)
                     self.player_cards.remove(played_card)
                     self.selected_cards = []
@@ -194,6 +203,8 @@ class Game:
                         self.passed = {key: False for key in self.passed}
                         self.current_player = 'player'
                         print("Zagrano kartę 8, kolejka zresetowana. Gracz zaczyna od nowa.")
+                    elif played_card.value == 100:
+                        self.joker_played = True                
                     else:
                         self.passed['player'] = False
                         self.last_player = 'player'
@@ -212,6 +223,7 @@ class Game:
                     self.last_player = 'player'
                     self.check_if_player_finished('player')
                     self.current_player = self.get_next_player()
+
                 elif len(self.selected_cards) == 3 and len(set(card.value for card in self.selected_cards)) == 1:
                     self.one_cards = False
                     self.two_cards = False
@@ -224,12 +236,16 @@ class Game:
                     self.last_player = 'player'
                     self.check_if_player_finished('player')
                     self.current_player = self.get_next_player()
+
                 else:
                     print("To jest niepoprawny ruch. Musisz wybrać jedną kartę na start, dwie karty tej samej wartości, lub trzy karty tej samej wartości!")
+
             else:
                 if self.three_cards:
                     if len(self.selected_cards) == 3 and len(set(card.value for card in self.selected_cards)) == 1:
                         if self.selected_cards[0].value > self.played_cards[-1].value:
+                            if self.joker_played and self.selected_cards[0].suit == 's' and self.selected_cards[0].value == 3:
+                                self.selected_cards[0].value = 101 
                             self.played_cards.extend(self.selected_cards)
                             for card in self.selected_cards:
                                 self.player_cards.remove(card)
@@ -248,9 +264,12 @@ class Game:
                             print("Możesz zagrać trzy karty tylko o wyższej wartości niż karty na stole!")
                     else:
                         print("Musisz zagrać trzy karty tej samej wartości!")
+
                 elif self.two_cards:
                     if len(self.selected_cards) == 2 and self.selected_cards[0].value == self.selected_cards[1].value:
                         if self.selected_cards[0].value > self.played_cards[-1].value:
+                            if self.joker_played and self.selected_cards[0].suit == 's' and self.selected_cards[0].value == 3:
+                                self.selected_cards[0].value = 101  
                             self.played_cards.extend(self.selected_cards)
                             for card in self.selected_cards:
                                 self.player_cards.remove(card)
@@ -269,10 +288,20 @@ class Game:
                             print("Możesz zagrać dwie karty tylko o wyższej wartości niż karty na stole!")
                     else:
                         print("Musisz zagrać dwie karty tej samej wartości!")
+
                 else:
                     if len(self.selected_cards) == 1:
-                        if self.selected_cards[0].value > self.played_cards[-1].value:
-                            played_card = self.selected_cards[0]
+                        played_card = self.selected_cards[0]
+
+                        if self.joker_played and played_card.suit == 's' and played_card.value == 3:
+                            print("XD 2")
+                            played_card.value = 101  
+                        elif self.played_cards[-1].value == 100:
+                            print("zmiana na 1000")
+                            self.joker_played = True   
+
+                        if played_card.value > self.played_cards[-1].value:
+                            print("nie wchodzi 2") 
                             self.played_cards.append(played_card)
                             self.player_cards.remove(played_card)
                             self.selected_cards = []
@@ -287,11 +316,14 @@ class Game:
                                 self.check_if_player_finished('player')
                                 self.current_player = self.get_next_player()
                         else:
-                            print("Możesz zagrać kartę tylko o wyższej wartości niż karty na stole!")
+                            print("Możesz zagrać kartę tylko o wyższej wartości niż karty na stole! 2222")
                     else:
                         print("Niepoprawny ruch! Musisz wybrać jedną kartę do zagrania.")
+
+                    
         elif self.pass_button_rect.collidepoint(pos):
             self.pass_turn()
+
 
     def handle_click(self, pos):
         if self.current_player == 'player':
@@ -339,6 +371,7 @@ class Game:
             'bot2': False,
             'bot3': False
         }
+        self.joker_played = False
 
     def check_if_player_finished(self, player):
         if player == 'bot1' and not self.bot1.cards:
@@ -393,6 +426,6 @@ class Game:
             if self.current_player == 'player':
                 break
 
-
     def update(self):
         self.animation.move_card()
+
