@@ -7,6 +7,8 @@ from animation import Animation
 from one_card import OneCardGame
 from two_cards import TwoCardsGame
 from three_cards import ThreeCardsGame
+from ranks import Ranks
+
 
 WHITE = (255, 255, 255)
 CARD_WIDTH = 60
@@ -63,6 +65,12 @@ class Game:
 
         self.joker_played = False
 
+        self.ranks = Ranks() 
+        self.round_number = 1
+        self.reset_ranks()
+
+    def reset_ranks(self):
+        self.ranks.reset_ranks()
 
     def draw_cards(self):
         self.player_cards.sort(key=lambda card: card.value, reverse=True)
@@ -129,6 +137,9 @@ class Game:
                 card.rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
                 self.screen.blit(card.image, card.rect.topleft)
         
+        self.draw_positions()  
+        self.draw_round_info() 
+
         self.draw_pass_info()
         self.draw_accept_button()
         self.draw_pass_button()
@@ -140,6 +151,11 @@ class Game:
         pass_text = f"Pass: {passed_count}/4"
         text_surface = self.font.render(pass_text, True, WHITE)
         self.screen.blit(text_surface, (10, self.screen_height - 50))
+
+    def draw_round_info(self):
+        round_text = f"Round: {self.round_number}/3"
+        text_surface = self.font.render(round_text, True, WHITE)
+        self.screen.blit(text_surface, (10, 10))  
 
     def draw_accept_button(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -164,21 +180,40 @@ class Game:
         self.screen.blit(text, text_rect)
 
     def draw_positions(self):
-        if 'player' in self.finished_order:
-            self.draw_position_text(self.finished_order.index('player') + 1, self.screen_width // 2, self.screen_height - CARD_HEIGHT - 80)
+        round_text = f"Round: {self.round_number}/3"
+        round_surface = self.font.render(round_text, True, WHITE)
+        round_rect = round_surface.get_rect(center=(10 + round_surface.get_width() // 2, 10 + round_surface.get_height() // 2))  
+        self.screen.blit(round_surface, round_rect.topleft) 
 
-        if 'bot1' in self.finished_order:
-            self.draw_position_text(self.finished_order.index('bot1') + 1, self.screen_width // 2, 10)
+        rank_texts = {
+            'player': self.ranks.get_rank('player'),
+            'bot1': self.ranks.get_rank('bot1'),
+            'bot2': self.ranks.get_rank('bot2'),
+            'bot3': self.ranks.get_rank('bot3')
+        }
 
-        if 'bot2' in self.finished_order:
-            self.draw_position_text(self.finished_order.index('bot2') + 1, 10, self.screen_height // 2)
+        positions = {
+            'player': (self.screen_width // 2, self.screen_height - CARD_HEIGHT - 80),
+            'bot1': (self.screen_width // 2, 180),
+            'bot2': (580, self.screen_height // 2),  
+            'bot3': (self.screen_width - 580, self.screen_height // 2) 
+        }
 
-        if 'bot3' in self.finished_order:
-            self.draw_position_text(self.finished_order.index('bot3') + 1, self.screen_width - 60, self.screen_height // 2)
+        for player, pos in positions.items():
+            rank_text = self.ranks.get_rank(player)
+            text_surface = self.font.render(f"{rank_text}", True, WHITE)
+            
+            if player == 'bot2':
+                text_surface = pygame.transform.rotate(text_surface, 90)  
+            elif player == 'bot3':
+                text_surface = pygame.transform.rotate(text_surface, 270) 
+            
+            text_rect = text_surface.get_rect(center=pos)  
+            self.screen.blit(text_surface, text_rect.topleft)
 
-    def draw_position_text(self, position, x, y):
+    def draw_position_text(self, position, x, y, rank):
         position_texts = ["1st", "2nd", "3rd", "4th"]
-        text_surface = self.font.render(position_texts[position - 1], True, WHITE)
+        text_surface = self.font.render(f"{position_texts[position - 1]} ({rank})", True, WHITE)
         self.screen.blit(text_surface, (x, y))
 
     def handle_button_click(self, pos):
@@ -373,6 +408,36 @@ class Game:
         }
         self.joker_played = False
 
+    def end_round(self):
+        self.ranks.update_ranks(self.finished_order)
+        
+        self.reset_round()  
+        self.finished_order = []  
+        self.player_cards = random.sample(self.cards, 13)  
+        remaining_cards = [card for card in self.cards if card not in self.player_cards]
+        self.bot1.reset(remaining_cards)
+        self.bot2.reset(remaining_cards)
+        self.bot3.reset(remaining_cards)
+        
+        self.round_number += 1  
+        if self.round_number > 3:
+            self.round_number = 1  
+
+    def draw_player_ranks(self):
+        positions = {
+            'player': (self.screen_width // 2, self.screen_height - CARD_HEIGHT - 80),
+            'bot1': (self.screen_width // 2, 10),
+            'bot2': (10, self.screen_height // 2),
+            'bot3': (self.screen_width - 60, self.screen_height // 2)
+        }
+
+        for player, pos in positions.items():
+            rank = self.ranks.get_rank(player)
+            text_surface = self.font.render(f"{player}: {rank}", True, WHITE)
+            self.screen.blit(text_surface, pos)
+
+
+
     def check_if_player_finished(self, player):
         if player == 'bot1' and not self.bot1.cards:
             if player not in self.finished_order:
@@ -386,6 +451,9 @@ class Game:
         elif player == 'player' and not self.player_cards:
             if player not in self.finished_order:
                 self.finished_order.append(player)
+
+        if len(self.finished_order) == 4:
+            self.end_round()
 
     def play_turn(self):
         while True:

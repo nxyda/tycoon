@@ -51,3 +51,7 @@ class Bot:
             rotated_image = pygame.transform.rotate(self.card_back_image, 270)
             y = start_y + i * (CARD_WIDTH + CARD_SPACING)
             screen.blit(rotated_image, (x, y))
+
+    def reset(self, remaining_cards):
+        self.cards = random.sample(remaining_cards, 13)
+        remaining_cards[:] = [card for card in remaining_cards if card not in self.cards]
