@@ -67,10 +67,17 @@ class Game:
 
         self.ranks = Ranks() 
         self.round_number = 1
+        self.reset_game()
+        
+    def reset_game(self):
         self.reset_ranks()
+        self.reset_scores()
 
     def reset_ranks(self):
         self.ranks.reset_ranks()
+
+    def reset_scores(self):
+        self.ranks.reset_scores()
 
     def draw_cards(self):
         self.player_cards.sort(key=lambda card: card.value, reverse=True)
@@ -143,6 +150,7 @@ class Game:
         self.draw_pass_info()
         self.draw_accept_button()
         self.draw_pass_button()
+        self.draw_scoreboard()
 
         self.draw_positions()  
 
@@ -422,6 +430,7 @@ class Game:
         self.round_number += 1  
         if self.round_number > 3:
             self.round_number = 1  
+            self.reset_ranks()
 
     def draw_player_ranks(self):
         positions = {
@@ -436,6 +445,14 @@ class Game:
             text_surface = self.font.render(f"{player}: {rank}", True, WHITE)
             self.screen.blit(text_surface, pos)
 
+    def draw_scoreboard(self):
+        y_offset = self.screen_height // 2
+        for player in ['player', 'bot1', 'bot2', 'bot3']:
+            rank_text = self.ranks.get_rank(player)
+            score_text = f"Score: {self.ranks.get_score(player)}"
+            text_surface = self.font.render(f"{player.capitalize()}: {rank_text} | {score_text}", True, WHITE)
+            self.screen.blit(text_surface, (10, y_offset))
+            y_offset += 30
 
 
     def check_if_player_finished(self, player):
