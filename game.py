@@ -248,9 +248,8 @@ class Game:
                     self.three_cards = False
                     self.four_cards = False
                     played_card = self.selected_cards[0]
-                    print("nie wchodzi")
+
                     if self.joker_played and played_card.suit == 's' and played_card.value == 3:
-                        print("XD")
                         played_card.value = 101 
 
                     self.played_cards.append(played_card)
@@ -270,137 +269,147 @@ class Game:
                         self.check_if_player_finished('player')
                         self.current_player = self.get_next_player()
 
-                elif len(self.selected_cards) == 2 and self.selected_cards[0].value == self.selected_cards[1].value:
-                    self.one_cards = False
-                    self.two_cards = True
-                    self.three_cards = False
-                    self.four_cards = False
-                    self.played_cards.extend(self.selected_cards)
-                    for card in self.selected_cards:
-                        self.player_cards.remove(card)
-                    self.selected_cards = []
-                    self.passed['player'] = False
-                    self.last_player = 'player'
-                    self.check_if_player_finished('player')
-                    self.current_player = self.get_next_player()
+                elif len(self.selected_cards) in [2, 3, 4]:
+                    card_values = [card.value for card in self.selected_cards if card.value != 100]  # Pomijamy Jokery przy porównaniu wartości
+                    unique_values = set(card_values)
 
-                elif len(self.selected_cards) == 3 and len(set(card.value for card in self.selected_cards)) == 1:
-                    self.one_cards = False
-                    self.two_cards = False
-                    self.three_cards = True
-                    self.four_cards = False
-                    self.played_cards.extend(self.selected_cards)
-                    for card in self.selected_cards:
-                        self.player_cards.remove(card)
-                    self.selected_cards = []
-                    self.passed['player'] = False
-                    self.last_player = 'player'
-                    self.check_if_player_finished('player')
-                    self.current_player = self.get_next_player()
+                    if len(unique_values) == 1:  # Sprawdzenie, czy wszystkie wybrane karty mają tę samą wartość
+                        joker_count = len([card for card in self.selected_cards if card.value == 100])
 
-                elif len(self.selected_cards) == 4 and len(set(card.value for card in self.selected_cards)) == 1:
-                    self.one_cards = False
-                    self.two_cards = False
-                    self.three_cards = False
-                    self.four_cards = True
-                    self.played_cards.extend(self.selected_cards)
-                    for card in self.selected_cards:
-                        self.player_cards.remove(card)
-                    self.selected_cards = []
-                    self.passed['player'] = False
-                    self.last_player = 'player'
-                    self.check_if_player_finished('player')
-                    self.current_player = self.get_next_player()
+                        if joker_count + len(card_values) == len(self.selected_cards):  # Sprawdzenie, czy zestaw zawiera same Jokery lub prawidłowe karty
+                            self.one_cards = len(self.selected_cards) == 1
+                            self.two_cards = len(self.selected_cards) == 2
+                            self.three_cards = len(self.selected_cards) == 3
+                            self.four_cards = len(self.selected_cards) == 4
 
+                            if self.joker_played:
+                                for card in self.selected_cards:
+                                    if card.value == 100:  # Jeśli karta to Joker, nadaj mu wartość pozostałych kart
+                                        card.value = unique_values.pop()
+
+                            self.played_cards.extend(self.selected_cards)
+                            for card in self.selected_cards:
+                                self.player_cards.remove(card)
+                            self.selected_cards = []
+                            self.passed['player'] = False
+                            self.last_player = 'player'
+                            self.check_if_player_finished('player')
+                            self.current_player = self.get_next_player()
+                        else:
+                            print(f"Zagranie niepoprawne! Musisz zagrać {len(self.selected_cards)} karty tej samej wartości.")
+                    else:
+                        print(f"Zagranie niepoprawne! Musisz zagrać {len(self.selected_cards)} karty tej samej wartości.")
                 else:
-                    print("To jest niepoprawny ruch. Musisz wybrać jedną kartę na start, dwie karty tej samej wartości, lub trzy karty tej samej wartości!")
+                    print("To jest niepoprawny ruch. Musisz wybrać jedną kartę na start, dwie karty tej samej wartości, trzy karty tej samej wartości lub cztery karty tej samej wartości!")
 
             else:
+                # Analogiczna logika dla zagrania kart, gdy już są karty na stole
                 if self.four_cards:
-                    if len(self.selected_cards) == 4 and len(set(card.value for card in self.selected_cards)) == 1:
-                        if self.selected_cards[0].value > self.played_cards[-1].value:
-                            if self.joker_played and self.selected_cards[0].suit == 's' and self.selected_cards[0].value == 3:
-                                self.selected_cards[0].value = 101 
-                            self.played_cards.extend(self.selected_cards)
-                            for card in self.selected_cards:
-                                self.player_cards.remove(card)
-                            self.selected_cards = []
-                            if self.played_cards[-1].value == 8:  
-                                self.played_cards = []
-                                self.passed = {key: False for key in self.passed}
-                                self.current_player = 'player'
-                                print("Zagrano kartę 8, kolejka zresetowana. Gracz zaczyna od nowa.")
+                    if len(self.selected_cards) == 4:
+                        card_values = [card.value for card in self.selected_cards if card.value != 100]
+                        unique_values = set(card_values)
+
+                        if len(unique_values) == 1:
+                            joker_count = len([card for card in self.selected_cards if card.value == 100])
+
+                            if joker_count + len(card_values) == 4 and self.selected_cards[0].value > self.played_cards[-1].value:
+                                if self.joker_played:
+                                    for card in self.selected_cards:
+                                        if card.value == 100:
+                                            card.value = unique_values.pop()
+                                self.played_cards.extend(self.selected_cards)
+                                for card in self.selected_cards:
+                                    self.player_cards.remove(card)
+                                self.selected_cards = []
+                                if self.played_cards[-1].value == 8:
+                                    self.played_cards = []
+                                    self.passed = {key: False for key in self.passed}
+                                    self.current_player = 'player'
+                                    print("Zagrano kartę 8, kolejka zresetowana. Gracz zaczyna od nowa.")
+                                else:
+                                    self.passed['player'] = False
+                                    self.last_player = 'player'
+                                    self.check_if_player_finished('player')
+                                    self.current_player = self.get_next_player()
                             else:
-                                self.passed['player'] = False
-                                self.last_player = 'player'
-                                self.check_if_player_finished('player')
-                                self.current_player = self.get_next_player()
+                                print("Możesz zagrać cztery karty tylko o wyższej wartości niż karty na stole!")
                         else:
-                            print("Możesz zagrać cztery karty tylko o wyższej wartości niż karty na stole!")
-                    else:
-                        print("Musisz zagrać cztery karty tej samej wartości!")
+                            print("Musisz zagrać cztery karty tej samej wartości!")
 
                 elif self.three_cards:
-                    if len(self.selected_cards) == 3 and len(set(card.value for card in self.selected_cards)) == 1:
-                        if self.selected_cards[0].value > self.played_cards[-1].value:
-                            if self.joker_played and self.selected_cards[0].suit == 's' and self.selected_cards[0].value == 3:
-                                self.selected_cards[0].value = 101 
-                            self.played_cards.extend(self.selected_cards)
-                            for card in self.selected_cards:
-                                self.player_cards.remove(card)
-                            self.selected_cards = []
-                            if self.played_cards[-1].value == 8:  
-                                self.played_cards = []
-                                self.passed = {key: False for key in self.passed}
-                                self.current_player = 'player'
-                                print("Zagrano kartę 8, kolejka zresetowana. Gracz zaczyna od nowa.")
+                    if len(self.selected_cards) == 3:
+                        card_values = [card.value for card in self.selected_cards if card.value != 100]
+                        unique_values = set(card_values)
+
+                        if len(unique_values) == 1:
+                            joker_count = len([card for card in self.selected_cards if card.value == 100])
+
+                            if joker_count + len(card_values) == 3 and self.selected_cards[0].value > self.played_cards[-1].value:
+                                if self.joker_played:
+                                    for card in self.selected_cards:
+                                        if card.value == 100:
+                                            card.value = unique_values.pop()
+                                self.played_cards.extend(self.selected_cards)
+                                for card in self.selected_cards:
+                                    self.player_cards.remove(card)
+                                self.selected_cards = []
+                                if self.played_cards[-1].value == 8:
+                                    self.played_cards = []
+                                    self.passed = {key: False for key in self.passed}
+                                    self.current_player = 'player'
+                                    print("Zagrano kartę 8, kolejka zresetowana. Gracz zaczyna od nowa.")
+                                else:
+                                    self.passed['player'] = False
+                                    self.last_player = 'player'
+                                    self.check_if_player_finished('player')
+                                    self.current_player = self.get_next_player()
                             else:
-                                self.passed['player'] = False
-                                self.last_player = 'player'
-                                self.check_if_player_finished('player')
-                                self.current_player = self.get_next_player()
+                                print("Możesz zagrać trzy karty tylko o wyższej wartości niż karty na stole!")
                         else:
-                            print("Możesz zagrać trzy karty tylko o wyższej wartości niż karty na stole!")
-                    else:
-                        print("Musisz zagrać trzy karty tej samej wartości!")
+                            print("Musisz zagrać trzy karty tej samej wartości!")
 
                 elif self.two_cards:
-                    if len(self.selected_cards) == 2 and self.selected_cards[0].value == self.selected_cards[1].value:
-                        if self.selected_cards[0].value > self.played_cards[-1].value:
-                            if self.joker_played and self.selected_cards[0].suit == 's' and self.selected_cards[0].value == 3:
-                                self.selected_cards[0].value = 101  
-                            self.played_cards.extend(self.selected_cards)
-                            for card in self.selected_cards:
-                                self.player_cards.remove(card)
-                            self.selected_cards = []
-                            if self.played_cards[-1].value == 8:  
-                                self.played_cards = []
-                                self.passed = {key: False for key in self.passed}
-                                self.current_player = 'player'
-                                print("Zagrano kartę 8, kolejka zresetowana. Gracz zaczyna od nowa.")
+                    if len(self.selected_cards) == 2:
+                        card_values = [card.value for card in self.selected_cards if card.value != 100]
+                        unique_values = set(card_values)
+
+                        if len(unique_values) == 1:
+                            joker_count = len([card for card in self.selected_cards if card.value == 100])
+
+                            if joker_count + len(card_values) == 2 and self.selected_cards[0].value > self.played_cards[-1].value:
+                                if self.joker_played:
+                                    for card in self.selected_cards:
+                                        if card.value == 100:
+                                            card.value = unique_values.pop()
+                                self.played_cards.extend(self.selected_cards)
+                                for card in self.selected_cards:
+                                    self.player_cards.remove(card)
+                                self.selected_cards = []
+                                if self.played_cards[-1].value == 8:
+                                    self.played_cards = []
+                                    self.passed = {key: False for key in self.passed}
+                                    self.current_player = 'player'
+                                    print("Zagrano kartę 8, kolejka zresetowana. Gracz zaczyna od nowa.")
+                                else:
+                                    self.passed['player'] = False
+                                    self.last_player = 'player'
+                                    self.check_if_player_finished('player')
+                                    self.current_player = self.get_next_player()
                             else:
-                                self.passed['player'] = False
-                                self.last_player = 'player'
-                                self.check_if_player_finished('player')
-                                self.current_player = self.get_next_player()
+                                print("Możesz zagrać dwie karty tylko o wyższej wartości niż karty na stole!")
                         else:
-                            print("Możesz zagrać dwie karty tylko o wyższej wartości niż karty na stole!")
-                    else:
-                        print("Musisz zagrać dwie karty tej samej wartości!")
+                            print("Musisz zagrać dwie karty tej samej wartości!")
 
                 else:
                     if len(self.selected_cards) == 1:
                         played_card = self.selected_cards[0]
 
                         if self.joker_played and played_card.suit == 's' and played_card.value == 3:
-                            print("XD 2")
                             played_card.value = 101  
                         elif self.played_cards[-1].value == 100:
-                            print("zmiana na 1000")
                             self.joker_played = True   
 
                         if played_card.value > self.played_cards[-1].value:
-                            print("nie wchodzi 2") 
                             self.played_cards.append(played_card)
                             self.player_cards.remove(played_card)
                             self.selected_cards = []
@@ -415,13 +424,13 @@ class Game:
                                 self.check_if_player_finished('player')
                                 self.current_player = self.get_next_player()
                         else:
-                            print("Możesz zagrać kartę tylko o wyższej wartości niż karty na stole! 2222")
+                            print("Możesz zagrać kartę tylko o wyższej wartości niż karty na stole!")
                     else:
                         print("Niepoprawny ruch! Musisz wybrać jedną kartę do zagrania.")
-
-                    
+                        
         elif self.pass_button_rect.collidepoint(pos):
             self.pass_turn()
+
 
 
     def handle_click(self, pos):
