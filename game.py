@@ -1,6 +1,7 @@
 import pygame
 import random
 import math
+import asyncio
 from card import Card
 from bot import Bot
 from animation import Animation
@@ -22,6 +23,10 @@ class Game:
     def __init__(self, screen):
         self.screen = screen
         self.screen_width, self.screen_height = self.screen.get_size()
+        self.last_play_time = pygame.time.get_ticks()  
+        self.play_interval = 1000 
+        self.is_playing = True
+        self.waiting_for_next_turn = False
 
         self.cards = Card.load_cards()
         self.player_cards = random.sample(self.cards, 13)
@@ -210,6 +215,8 @@ class Game:
         self.draw_pass_button()
         self.draw_scoreboard()
 
+        self.draw_current_player_name()
+        
         self.draw_positions()  
 
     def draw_pass_info(self):
@@ -244,6 +251,16 @@ class Game:
         text = self.font.render("Pass", True, WHITE)
         text_rect = text.get_rect(center=self.pass_button_rect.center)
         self.screen.blit(text, text_rect)
+
+    def draw_current_player_name(self):
+        WHITE = (255, 255, 255)
+        font = pygame.font.SysFont(None, 36)
+
+        text = f"Current player: {self.current_player}"
+        text_surface = font.render(text, True, WHITE)
+
+        text_rect = text_surface.get_rect(topright=(self.screen_width - 20, 20))
+        self.screen.blit(text_surface, text_rect)
 
     def draw_positions(self):
         round_text = f"Round: {self.round_number}/3"
@@ -580,45 +597,57 @@ class Game:
             self.end_round()
 
     def play_turn(self):
-        while True:
-            if self.current_player == 'player':
-                break
+        current_time = pygame.time.get_ticks()
 
-            current_bot = None
-            if self.current_player == 'bot1':
-                current_bot = self.bot1
-            elif self.current_player == 'bot2':
-                current_bot = self.bot2
-            elif self.current_player == 'bot3':
-                current_bot = self.bot3
+        if self.waiting_for_next_turn:
+            if current_time - self.last_play_time >= self.play_interval:
+                self.waiting_for_next_turn = False
+                self.last_play_time = current_time
+            else:
+                return self.is_playing  
 
-            if current_bot:
-                if self.four_cards:
-                    self.four_cards_game.play_turn(current_bot)
-                elif self.three_cards:
-                    self.three_cards_game.play_turn(current_bot)
-                elif self.two_cards:
-                    self.two_cards_game.play_turn(current_bot)
-                else:
-                    self.one_card_game.play_turn(current_bot)
+        if self.current_player == 'player':
+            self.waiting_for_next_turn = True
+            self.last_play_time = current_time
+            return self.is_playing  
+        
+        current_bot = None
+        if self.current_player == 'bot1':
+            current_bot = self.bot1
+        elif self.current_player == 'bot2':
+            current_bot = self.bot2
+        elif self.current_player == 'bot3':
+            current_bot = self.bot3
 
-                if self.played_cards and self.played_cards[-1].value == 8:
-                    self.played_cards = []
-                    self.passed = {key: False for key in self.passed}
-                    self.current_player = self.get_next_player()
-                    continue
+        if current_bot:
+            if self.four_cards:
+                self.four_cards_game.play_turn(current_bot)
+            elif self.three_cards:
+                self.three_cards_game.play_turn(current_bot)
+            elif self.two_cards:
+                self.two_cards_game.play_turn(current_bot)
+            else:
+                self.one_card_game.play_turn(current_bot)
 
+            if self.played_cards and self.played_cards[-1].value == 8:
+                self.played_cards = []
+                self.passed = {key: False for key in self.passed}
+                self.current_player = self.get_next_player()
+            else:
                 self.check_if_player_finished(self.current_player)
 
+            self.waiting_for_next_turn = True
+            self.last_play_time = current_time
+
+        if self.all_bots_passed() and self.passed['player']:
+            self.reset_round()
+            self.current_player = self.last_player
+            self.is_playing = False
+        else:
             self.current_player = self.get_next_player()
 
-            if self.all_bots_passed() and self.passed['player']:
-                self.reset_round()
-                self.current_player = self.last_player
-                break
+        return self.is_playing
 
-            if self.current_player == 'player':
-                break
 
     def update(self):
         self.animation.move_card()
