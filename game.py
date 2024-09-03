@@ -216,7 +216,7 @@ class Game:
         self.draw_scoreboard()
 
         self.draw_current_player_name()
-        
+
         self.draw_positions()  
 
     def draw_pass_info(self):
@@ -430,9 +430,27 @@ class Game:
                 elif self.two_cards:
                     if len(self.selected_cards) == 2:
                         card_values = [card.value for card in self.selected_cards if card.value != 100]
+                        joker_count = len([card for card in self.selected_cards if card.value == 100])
+                        print(joker_count)
                         unique_values = set(card_values)
 
-                        if len(unique_values) == 1:
+                        if joker_count == 2:
+                            for card in self.selected_cards:
+                                self.player_cards.remove(card)
+                            self.selected_cards = []
+                            if self.played_cards[-1].value == 8:
+                                self.played_cards = []
+                                self.passed = {key: False for key in self.passed}
+                                self.current_player = 'player'
+                                print("Zagrano kartę 8, kolejka zresetowana. Gracz zaczyna od nowa.")
+                            else:
+                                self.passed['player'] = False
+                                self.last_player = 'player'
+                                self.check_if_player_finished('player')
+                                self.current_player = self.get_next_player()
+                            
+
+                        elif len(unique_values) == 1:
                             joker_count = len([card for card in self.selected_cards if card.value == 100])
 
                             if joker_count + len(card_values) == 2 and self.selected_cards[0].value > self.played_cards[-1].value:
@@ -606,10 +624,7 @@ class Game:
             else:
                 return self.is_playing  
 
-        if self.current_player == 'player':
-            self.waiting_for_next_turn = True
-            self.last_play_time = current_time
-            return self.is_playing  
+        print(f"Current player: {self.current_player}")
         
         current_bot = None
         if self.current_player == 'bot1':
@@ -618,6 +633,11 @@ class Game:
             current_bot = self.bot2
         elif self.current_player == 'bot3':
             current_bot = self.bot3
+
+        if self.current_player == 'player':
+            self.waiting_for_next_turn = True
+            self.last_play_time = current_time
+            return self.is_playing  
 
         if current_bot:
             if self.four_cards:
