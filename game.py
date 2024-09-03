@@ -178,14 +178,29 @@ class Game:
         elif self.four_cards:
             center_x = (self.screen_width - CARD_WIDTH) // 2
             center_y = (self.screen_height - CARD_HEIGHT) // 2
+            offset_between_cards = 5  
 
             for i, card in enumerate(self.played_cards):
-                pos_index = i % 4
+                group_index = i // 4 
+                pos_index = group_index % len(positions)  
                 offset_x, offset_y = positions[pos_index]
-                x = center_x + offset_x
-                y = center_y + offset_y
+
+                if i % 4 == 0:  
+                    x = center_x + offset_x
+                    y = center_y + offset_y
+                elif i % 4 == 1:  
+                    x = center_x + offset_x + CARD_WIDTH + offset_between_cards
+                    y = center_y + offset_y
+                elif i % 4 == 2:  
+                    x = center_x + offset_x + 2 * (CARD_WIDTH + offset_between_cards)
+                    y = center_y + offset_y
+                else:  
+                    x = center_x + offset_x + 3 * (CARD_WIDTH + offset_between_cards)
+                    y = center_y + offset_y
+
                 card.rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
                 self.screen.blit(card.image, card.rect.topleft)
+
         
         self.draw_positions()  
         self.draw_round_info() 
