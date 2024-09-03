@@ -126,12 +126,24 @@ class Game:
         elif self.two_cards:
             center_x = (self.screen_width - CARD_WIDTH) // 2
             center_y = (self.screen_height - CARD_HEIGHT) // 2
+            offset_between_cards = 50 
 
             for i, card in enumerate(self.played_cards):
-                pos_index = i % 4
+                pair_index = i // 2
+                pos_index = pair_index % len(positions)
                 offset_x, offset_y = positions[pos_index]
-                x = center_x + offset_x
-                y = center_y + offset_y 
+
+                if i % 2 == 0:  
+                    x = center_x + offset_x
+                    y = center_y + offset_y
+                else:  
+                    if i % 3 == 0:
+                        offset_between_cards = 5
+                    else:
+                        offset_between_cards = -5
+                    x = center_x + offset_x + CARD_WIDTH + offset_between_cards
+                    y = center_y + offset_y
+
                 card.rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
                 self.screen.blit(card.image, card.rect.topleft)
 
@@ -270,13 +282,13 @@ class Game:
                         self.current_player = self.get_next_player()
 
                 elif len(self.selected_cards) in [2, 3, 4]:
-                    card_values = [card.value for card in self.selected_cards if card.value != 100]  # Pomijamy Jokery przy porównaniu wartości
+                    card_values = [card.value for card in self.selected_cards if card.value != 100]  
                     unique_values = set(card_values)
 
-                    if len(unique_values) == 1:  # Sprawdzenie, czy wszystkie wybrane karty mają tę samą wartość
+                    if len(unique_values) == 1: 
                         joker_count = len([card for card in self.selected_cards if card.value == 100])
 
-                        if joker_count + len(card_values) == len(self.selected_cards):  # Sprawdzenie, czy zestaw zawiera same Jokery lub prawidłowe karty
+                        if joker_count + len(card_values) == len(self.selected_cards):  
                             self.one_cards = len(self.selected_cards) == 1
                             self.two_cards = len(self.selected_cards) == 2
                             self.three_cards = len(self.selected_cards) == 3
@@ -284,7 +296,7 @@ class Game:
 
                             if self.joker_played:
                                 for card in self.selected_cards:
-                                    if card.value == 100:  # Jeśli karta to Joker, nadaj mu wartość pozostałych kart
+                                    if card.value == 100:  
                                         card.value = unique_values.pop()
 
                             self.played_cards.extend(self.selected_cards)
@@ -303,7 +315,6 @@ class Game:
                     print("To jest niepoprawny ruch. Musisz wybrać jedną kartę na start, dwie karty tej samej wartości, trzy karty tej samej wartości lub cztery karty tej samej wartości!")
 
             else:
-                # Analogiczna logika dla zagrania kart, gdy już są karty na stole
                 if self.four_cards:
                     if len(self.selected_cards) == 4:
                         card_values = [card.value for card in self.selected_cards if card.value != 100]
