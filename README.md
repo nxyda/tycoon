@@ -1,0 +1,1 @@
+Daifugō is a Japanese card game where players compete to get rid of all their cards first. This project implements the full game logic and a graphical user interface (GUI) to make gameplay interactive and user-friendly. Players can play against AI or other users locally.
